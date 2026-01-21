@@ -96,12 +96,27 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
     }
 
     // 6. Create order record
+    // Ensure userId is set (should be required, but handle edge case)
+    if (!userId) {
+      throw new Error('User ID is required to create an order');
+    }
+
+    // Convert Stripe Address to plain JSON object for storage
+    const shippingAddressJson = {
+      line1: shippingAddress.line1,
+      line2: shippingAddress.line2 || null,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      postal_code: shippingAddress.postal_code,
+      country: shippingAddress.country,
+    };
+
     const orderData = {
       user_id: userId,
       stripe_checkout_session_id: session.id,
       product_id: productId,
       quantity,
-      shipping_address: shippingAddress,
+      shipping_address: shippingAddressJson,
       shipping_label_urls: [] as string[],
       status: 'pending' as const,
     };
