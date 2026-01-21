@@ -1,18 +1,26 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-export function Logo() {
+interface LogoProps {
+  variant?: 'light' | 'dark';
+}
+
+export function Logo({ variant = 'dark' }: LogoProps) {
+  const isLight = variant === 'light';
+  const logoSrc = '/logo/icon.png';
+  const textColor = isLight ? 'text-white' : 'text-navy-600';
+
   return (
-    <Link href='/' className='flex w-fit items-center gap-2'>
+    <Link href='/' className='flex w-fit items-center gap-3'>
       <Image
-        src='/logo.png'
-        width={40}
-        height={40}
+        src={logoSrc}
+        alt="Angelica's Organic EVOO logo"
+        width={isLight ? 56 : 48}
+        height={isLight ? 56 : 48}
         priority
         quality={100}
-        alt='UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME logo mark'
+        className='h-12 md:h-14 w-auto'
       />
-      <span className='font-alt text-xl text-white'>UPDATE_THIS_WITH_YOUR_APP_DISPLAY_NAME</span>
     </Link>
   );
 }

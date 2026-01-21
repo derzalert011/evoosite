@@ -3,34 +3,35 @@
 @tailwind utilities;
 @layer base {
   :root {
-    --background: 240 6% 10%;
-    --foreground: 60 0% 90%;
+    /* Brand Colors */
+    --background: 45 78% 96%; /* #FDF9EB - offWhite */
+    --foreground: 225 100% 22%; /* #001B71 - darkBlue */
 
-    --muted: 240 6% 10%;
-    --muted-foreground: 240 5% 84%;
+    --muted: 45 78% 96%;
+    --muted-foreground: 225 100% 22%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 225 100% 22%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card: 45 78% 96%; /* #FDF9EB - offWhite */
+    --card-foreground: 225 100% 22%; /* #001B71 - darkBlue */
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 225 100% 22%; /* #001B71 - darkBlue */
+    --primary-foreground: 45 78% 96%; /* #FDF9EB - offWhite */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 45 78% 96%; /* #FDF9EB - offWhite */
+    --secondary-foreground: 225 100% 22%; /* #001B71 - darkBlue */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 47 92% 60%; /* #F7D63A - brightYellow */
+    --accent-foreground: 225 100% 22%; /* #001B71 - darkBlue */
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 215 20.2% 65.1%;
+    --ring: 47 92% 60%; /* #F7D63A - brightYellow */
 
     --radius: 0.5rem;
   }
@@ -81,27 +82,124 @@
     @apply border-border;
     @apply min-w-0;
   }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
-  }
   html {
     @apply h-full;
+    scroll-behavior: smooth;
   }
+
   body {
-    @apply h-full;
+    @apply h-full bg-cream-50 text-gray-900 font-sans antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans font-extrabold uppercase tracking-wide;
+  }
+
   h1 {
-    @apply font-alt;
-    @apply font-bold;
-    @apply text-4xl;
-    @apply text-white;
-    @apply lg:text-6xl;
-    @apply bg-clip-text;
-    @apply drop-shadow-[0_0_15px_rgba(0,0,0,1)];
-    @apply lg:text-transparent;
-    @apply lg:bg-gradient-to-br;
-    @apply from-white;
-    @apply to-neutral-400;
+    @apply text-4xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+@layer components {
+  /* Primary button - Yellow background with navy text (matches Shopify) */
+  .btn-primary {
+    @apply bg-gold-500 text-navy-600 px-5 py-3 rounded font-semibold uppercase text-sm
+           hover:bg-navy-600 hover:text-white transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-gold-400 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary button - Navy background with white text */
+  .btn-secondary {
+    @apply bg-navy-600 text-white px-5 py-3 rounded font-semibold uppercase text-sm
+           hover:bg-navy-700 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-navy-400 focus:ring-offset-2;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    @apply border-2 border-navy-600 text-navy-600 px-5 py-3 rounded font-semibold uppercase text-sm
+           hover:bg-navy-600 hover:text-white transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white text-gray-900 border border-navy-600 rounded
+           focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500
+           placeholder:text-gray-400;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-extrabold uppercase text-navy-600 mb-4 tracking-wide;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-navy-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-navy-400;
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

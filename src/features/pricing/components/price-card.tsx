@@ -75,12 +75,14 @@ export function PricingCard({
         {!Boolean(price) && product.prices.length > 1 && <PricingSwitch onChange={handleBillingIntervalChange} />}
 
         <div className='m-auto flex w-fit flex-1 flex-col gap-2 px-8 py-4'>
-          {metadata.generatedImages === 'enterprise' && <CheckItem text={`Unlimited banner images`} />}
-          {metadata.generatedImages !== 'enterprise' && (
-            <CheckItem text={`Generate ${metadata.generatedImages} banner images`} />
+          {metadata.bottleSize && <CheckItem text={`${metadata.bottleSize} bottle`} />}
+          <CheckItem text='100% Arbequina Olives' />
+          <CheckItem text='Organic & Extra Virgin' />
+          {metadata.stockCount !== undefined && metadata.stockCount > 0 && (
+            <CheckItem text={`Only ${metadata.stockCount} bottles remaining`} />
           )}
-          {<CheckItem text={`${metadata.imageEditor} image editing features`} />}
-          {<CheckItem text={`${metadata.supportLevel} support`} />}
+          <CheckItem text='Free Shipping' />
+          {metadata.harvestYear && <CheckItem text={`${metadata.harvestYear} Harvest`} />}
         </div>
 
         {createCheckoutAction && (
@@ -91,7 +93,7 @@ export function PricingCard({
                 className='w-full'
                 onClick={() => createCheckoutAction({ price: currentPrice })}
               >
-                Get Started
+                Reserve a Bottle
               </Button>
             )}
             {!currentPrice && (

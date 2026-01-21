@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { upsertUserSubscription } from '@/features/account/controllers/upsert-user-subscription';
 import { upsertPrice } from '@/features/pricing/controllers/upsert-price';
 import { upsertProduct } from '@/features/pricing/controllers/upsert-product';
+import { processOrder } from '@/features/orders/controllers/process-order';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { getEnvVar } from '@/utils/get-env-var';
 
@@ -61,6 +62,9 @@ export async function POST(req: Request) {
               customerId: checkoutSession.customer as string,
               isCreateAction: true,
             });
+          } else if (checkoutSession.mode === 'payment') {
+            // Handle one-time payment orders
+            await processOrder(checkoutSession);
           }
           break;
         default:

@@ -1,20 +1,27 @@
 import z from 'zod';
 
-export const priceCardVariantSchema = z.enum(['basic', 'pro', 'enterprise']);
-
 export const productMetadataSchema = z
   .object({
-    price_card_variant: priceCardVariantSchema,
+    bottle_size: z.string().optional(), // e.g., "500ml"
+    purchase_date: z.string().optional(), // ISO date string
+    stock_count: z.number().optional(),
+    harvest_year: z.number().optional(),
+    // Keep legacy fields for backward compatibility during migration
+    price_card_variant: z.enum(['basic', 'pro', 'enterprise']).optional(),
     generated_images: z.string().optional(),
-    image_editor: z.enum(['basic', 'pro']),
-    support_level: z.enum(['email', 'live']),
+    image_editor: z.enum(['basic', 'pro']).optional(),
+    support_level: z.enum(['email', 'live']).optional(),
   })
   .transform((data) => ({
-    priceCardVariant: data.price_card_variant,
-    generatedImages: data.generated_images ? parseInt(data.generated_images) : 'enterprise',
+    bottleSize: data.bottle_size,
+    purchaseDate: data.purchase_date,
+    stockCount: data.stock_count,
+    harvestYear: data.harvest_year,
+    // Legacy fields (for backward compatibility)
+    priceCardVariant: data.price_card_variant || 'basic',
+    generatedImages: data.generated_images ? parseInt(data.generated_images) : undefined,
     imageEditor: data.image_editor,
     supportLevel: data.support_level,
   }));
 
 export type ProductMetadata = z.infer<typeof productMetadataSchema>;
-export type PriceCardVariant = z.infer<typeof priceCardVariantSchema>;

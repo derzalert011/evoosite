@@ -1,5 +1,5 @@
-import { PricingSection } from '@/features/pricing/components/pricing-section';
+import { redirect } from 'next/navigation';
 
-export default async function PricingPage() {
-  return <PricingSection isPricingPage />;
+export default function PricingPage() {
+  redirect('/products/angelicas-organic-evoo');
 }

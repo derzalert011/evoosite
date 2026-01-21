@@ -8,14 +8,9 @@ import { AuthUI } from '../auth-ui';
 
 export default async function LoginPage() {
   const session = await getSession();
-  const subscription = await getSubscription();
 
-  if (session && subscription) {
-    redirect('/account');
-  }
-
-  if (session && !subscription) {
-    redirect('/pricing');
+  if (session) {
+    redirect('/');
   }
 
   return (
