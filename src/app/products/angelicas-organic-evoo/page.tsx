@@ -35,10 +35,19 @@ export const metadata: Metadata = {
 };
 
 export default async function ProductPage() {
-  const products = await getProducts();
+  let products: Awaited<ReturnType<typeof getProducts>>;
+  
+  try {
+    products = await getProducts();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    notFound();
+  }
+
   const product = products[0]; // For now, we only have one product
 
   if (!product) {
+    console.warn('No product found - products array:', products);
     notFound();
   }
 
