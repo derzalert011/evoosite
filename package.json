@@ -12,6 +12,7 @@
     "email:export": "email export",
     "stripe:listen": "stripe listen --forward-to=localhost:3000/api/webhooks --project-name=UPDATE_THIS_WITH_YOUR_STRIPE_PROJECT_NAME",
     "sync:stripe": "env-cmd -f ./.env.local npx tsx scripts/sync-stripe-to-supabase.ts",
+    "test:email": "env-cmd -f ./.env.local npx tsx scripts/test-brevo-email.ts",
     "generate-types": "npx supabase gen types typescript --project-id xicqcviaolqiwysxgouz --schema public > src/libs/supabase/types.ts",
     "supabase:link": "env-cmd -f ./.env.local supabase link --project-ref xicqcviaolqiwysxgouz",
     "migration:new": "supabase migration new",

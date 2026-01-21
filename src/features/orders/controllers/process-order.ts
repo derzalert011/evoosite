@@ -155,8 +155,6 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
 
     // 8. Send customer email
     try {
-      // We'll need to render the React email component to HTML
-      // For now, using a simple HTML string - can be enhanced later
       const welcomeEmailHtml = `
         <!DOCTYPE html>
         <html>
@@ -177,8 +175,10 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
         subject: "Welcome to the Family!",
         htmlContent: welcomeEmailHtml,
       });
+      console.log(`✅ Customer email sent to: ${customerEmail}`);
     } catch (error: any) {
-      errors.push({ service: 'Customer Email', error: error.message });
+      console.error('❌ Failed to send customer email:', error);
+      errors.push({ service: 'Customer Email', error: error.message || 'Unknown error' });
     }
 
     // 9. Send admin notification email
@@ -220,6 +220,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
       `;
 
       const adminEmail = getEnvVar(process.env.ADMIN_EMAIL, 'ADMIN_EMAIL');
+      console.log(`📧 Sending admin email to: ${adminEmail}`);
       await sendTransactionalEmail({
         to: [{ email: adminEmail }],
         subject: errors.length > 0 
@@ -227,8 +228,12 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
           : `📦 New Order #${order.id.substring(0, 8)}`,
         htmlContent: adminEmailHtml,
       });
+      console.log(`✅ Admin email sent successfully to: ${adminEmail}`);
     } catch (error: any) {
-      console.error('Failed to send admin notification email:', error);
+      console.error('❌ Failed to send admin notification email:', error);
+      if (error.response) {
+        console.error('   Brevo API Response:', JSON.stringify(error.response.body, null, 2));
+      }
       // Don't add to errors array - admin notification failure shouldn't block order
     }
 
