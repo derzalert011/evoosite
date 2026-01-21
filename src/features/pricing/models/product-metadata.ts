@@ -1,5 +1,7 @@
 import z from 'zod';
 
+export type PriceCardVariant = 'basic' | 'pro' | 'enterprise';
+
 export const productMetadataSchema = z
   .object({
     bottle_size: z.string().optional(), // e.g., "500ml"

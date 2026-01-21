@@ -45,15 +45,15 @@ export async function createShipment(
     length: packageDetails.length,
     width: packageDetails.width,
     height: packageDetails.height,
-    distance_unit: 'in',
+    distanceUnit: 'in' as const,
     weight: packageDetails.weight,
-    mass_unit: 'lb',
+    massUnit: 'lb' as const,
   };
 
   // Create shipment
-  const shipment = await shippo.shipment.create({
-    address_from: fromAddress,
-    address_to: toAddress,
+  const shipment = await shippo.shipments.create({
+    addressFrom: fromAddress,
+    addressTo: toAddress,
     parcels: [parcel],
     async: false,
   });
@@ -77,18 +77,18 @@ export async function createShipment(
   )[0];
 
   // Purchase the label using the cheapest rate
-  const transaction = await shippo.transaction.create({
-    rate: cheapestRate.object_id,
+  const transaction = await shippo.transactions.create({
+    rate: cheapestRate.objectId,
     async: false,
   });
 
-  if (!transaction.label_url) {
+  if (!transaction.labelUrl) {
     throw new Error('Failed to generate shipping label');
   }
 
   return {
-    labelUrl: transaction.label_url,
-    trackingNumber: transaction.tracking_number || '',
+    labelUrl: transaction.labelUrl,
+    trackingNumber: transaction.trackingNumber || '',
     rate: parseFloat(cheapestRate.amount),
   };
 }

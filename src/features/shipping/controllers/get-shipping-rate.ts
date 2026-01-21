@@ -57,15 +57,15 @@ export async function getShippingRate(
     length: packageDetails.length,
     width: packageDetails.width,
     height: packageDetails.height,
-    distance_unit: 'in',
+    distanceUnit: 'in' as const,
     weight: packageDetails.weight,
-    mass_unit: 'lb',
+    massUnit: 'lb' as const,
   };
 
   // Get rates
-  const shipment = await shippo.shipment.create({
-    address_from: fromAddress,
-    address_to: toAddress,
+  const shipment = await shippo.shipments.create({
+    addressFrom: fromAddress,
+    addressTo: toAddress,
     parcels: [parcel],
     async: false,
   });
@@ -91,6 +91,6 @@ export async function getShippingRate(
   return {
     rate: parseFloat(cheapestRate.amount),
     serviceLevel: cheapestRate.servicelevel?.name || cheapestRate.servicelevel?.token || 'USPS Standard',
-    objectId: cheapestRate.object_id,
+    objectId: cheapestRate.objectId,
   };
 }

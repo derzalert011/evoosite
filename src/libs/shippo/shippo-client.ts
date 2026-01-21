@@ -1,14 +1,14 @@
-import shippo from 'shippo';
+import { Shippo } from 'shippo';
 
 import { getEnvVar } from '@/utils/get-env-var';
 
-let shippoClient: shippo.Shippo | null = null;
+let shippoClient: Shippo | null = null;
 
-export function getShippoClient(): shippo.Shippo {
+export function getShippoClient(): Shippo {
   if (!shippoClient) {
     const apiKey = getEnvVar(process.env.SHIPPO_API_KEY, 'SHIPPO_API_KEY');
-    shippoClient = shippo({
-      apiKeyToken: apiKey,
+    shippoClient = new Shippo({
+      apiKeyHeader: apiKey,
     });
   }
   

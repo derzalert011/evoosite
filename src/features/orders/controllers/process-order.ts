@@ -177,7 +177,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
       `;
 
       await sendTransactionalEmail({
-        to: [{ email: customerEmail, name: customerName }],
+        to: [{ email: customerEmail, name: customerName || undefined }],
         subject: "Welcome to the Family!",
         htmlContent: welcomeEmailHtml,
       });
