@@ -4,16 +4,15 @@ import { ProductWithPrices } from '../types';
 export async function getProducts(): Promise<ProductWithPrices[]> {
   const supabase = await createSupabaseServerClient();
 
+  // Simplified query without ordering by metadata (which might be null)
   const { data, error } = await supabase
     .from('products')
     .select('*, prices(*)')
-    .eq('active', true)
-    .order('metadata->index')
-    .order('unit_amount', { referencedTable: 'prices', ascending: true });
+    .eq('active', true);
 
   if (error) {
     console.error('Error fetching products:', error.message);
-    console.error('Error details:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return [];
   }
 
@@ -25,13 +24,20 @@ export async function getProducts(): Promise<ProductWithPrices[]> {
   // Filter out products without active prices on the client side
   const productsWithActivePrices: ProductWithPrices[] = (data as any[])
     .map((product: any) => {
-      const filteredPrices = (product.prices || []).filter((price: any) => price.active === true);
+      const filteredPrices = (product.prices || []).filter((price: any) => price?.active === true);
       return {
         ...product,
         prices: filteredPrices,
       } as ProductWithPrices;
     })
-    .filter((product: ProductWithPrices) => product.prices.length > 0);
+    .filter((product: ProductWithPrices) => product.prices.length > 0)
+    // Sort by metadata index if available, otherwise by name
+    .sort((a, b) => {
+      const aIndex = (a.metadata as any)?.index ?? 999;
+      const bIndex = (b.metadata as any)?.index ?? 999;
+      if (aIndex !== bIndex) return aIndex - bIndex;
+      return (a.name || '').localeCompare(b.name || '');
+    });
 
   return productsWithActivePrices;
 }
