@@ -96,11 +96,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
     }
 
     // 6. Create order record
-    // Ensure userId is set (should be required, but handle edge case)
-    if (!userId) {
-      throw new Error('User ID is required to create an order');
-    }
-
+    // userId is optional for guest checkout
     // Convert Stripe Address to plain JSON object for storage
     const shippingAddressJson = {
       line1: shippingAddress.line1,
@@ -112,7 +108,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
     };
 
     const orderData = {
-      user_id: userId,
+      user_id: userId || null, // Allow null for guest checkout
       stripe_checkout_session_id: session.id,
       product_id: productId,
       quantity,

@@ -2,8 +2,6 @@
 
 import { redirect } from 'next/navigation';
 
-import { getOrCreateCustomer } from '@/features/account/controllers/get-or-create-customer';
-import { getSession } from '@/features/account/controllers/get-session';
 import { checkStock } from '@/features/products/controllers/check-stock';
 import { Price } from '@/features/pricing/types';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
@@ -18,18 +16,7 @@ export async function createCheckoutAction({
   quantity?: number;
   productId?: string;
 }) {
-  // 1. Get the user from session
-  const session = await getSession();
-
-  if (!session?.user) {
-    return redirect(`${getURL()}/signup`);
-  }
-
-  if (!session.user.email) {
-    throw Error('Could not get email');
-  }
-
-  // 2. Validate stock if product ID is provided
+  // 1. Validate stock if product ID is provided
   if (productId) {
     const stockCheck = await checkStock(productId, quantity);
     if (!stockCheck.available) {
@@ -37,7 +24,7 @@ export async function createCheckoutAction({
     }
   }
 
-  // 3. Validate quantity limits
+  // 2. Validate quantity limits
   if (quantity <= 0) {
     throw new Error('Quantity must be greater than 0');
   }
@@ -45,22 +32,12 @@ export async function createCheckoutAction({
     throw new Error('Maximum order quantity is 20 bottles');
   }
 
-  // 4. Retrieve or create the customer in Stripe
-  const customer = await getOrCreateCustomer({
-    userId: session.user.id,
-    email: session.user.email,
-  });
-
-  // 5. Create a checkout session in Stripe with shipping
+  // 3. Create a checkout session in Stripe with shipping (guest checkout - no customer required)
   const checkoutSession = await stripeAdmin.checkout.sessions.create({
     payment_method_types: ['card'],
     billing_address_collection: 'required',
     shipping_address_collection: {
       allowed_countries: ['US'],
-    },
-    customer,
-    customer_update: {
-      address: 'auto',
     },
     line_items: [
       {
