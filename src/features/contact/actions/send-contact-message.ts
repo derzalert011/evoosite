@@ -16,7 +16,7 @@ export async function sendContactMessage(params: {
     const adminEmail = getEnvVar(process.env.ADMIN_EMAIL, 'ADMIN_EMAIL');
 
     // Render email template
-    const emailHtml = render(
+    const emailHtml = await render(
       ContactFormEmail({
         name: params.name,
         email: params.email,
