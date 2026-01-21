@@ -1,6 +1,9 @@
 import { getShippoClient, getShippingOrigin, type ShippingOrigin } from '@/libs/shippo/shippo-client';
 import type { ShippingDestination, ShippingPackage } from './get-shipping-rate';
 
+// Re-export for use in other modules
+export type { ShippingDestination };
+
 /**
  * Create a shipment and generate a shipping label
  * Returns the label URL and transaction object ID
