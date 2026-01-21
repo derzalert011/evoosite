@@ -45,7 +45,7 @@ export function ContactForm() {
         message: message.trim(),
       });
 
-      if (result.error) {
+      if (result?.error) {
         setMessageState({ type: 'error', text: result.error });
       } else {
         setMessageState({

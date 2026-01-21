@@ -26,7 +26,7 @@ export function NewsletterSignup() {
 
     try {
       const result = await signupNewsletter(email);
-      if (result.error) {
+      if (result?.error) {
         setMessage({ type: 'error', text: result.error });
       } else {
         setMessage({ type: 'success', text: 'Thank you! Check your email for a special discount.' });
