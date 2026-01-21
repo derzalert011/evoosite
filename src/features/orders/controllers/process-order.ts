@@ -85,7 +85,9 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
     try {
       await stripeAdmin.products.update(productId, {
         metadata: {
-          ...product.metadata,
+          ...(product.metadata && typeof product.metadata === 'object' && !Array.isArray(product.metadata) 
+            ? product.metadata as Record<string, string>
+            : {}),
           stock_count: newStock.toString(),
         },
       });
