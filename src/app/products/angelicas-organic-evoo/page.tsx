@@ -7,8 +7,6 @@ import { BRAND_VOICE } from '@/lib/brand-config';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 import { productMetadataSchema } from '@/features/pricing/models/product-metadata';
 import { ProductGallery } from '@/features/products/components/product-gallery';
-import { ProductDetails } from '@/features/products/components/product-details';
-import { ProductDescription } from '@/features/products/components/product-description';
 import { ProductCheckoutButton } from './product-checkout-button';
 
 export const metadata: Metadata = {
@@ -144,15 +142,8 @@ export default async function ProductPage() {
                 </p>
               </div>
 
-              <div className='bg-cream-100 rounded-lg p-6 mb-8'>
-                <h3 className='font-bold uppercase text-navy-600 text-lg mb-4 tracking-wide'>Tasting Notes</h3>
-                <p className='text-gray-600 italic'>
-                  {BRAND_VOICE.productCharacteristics.tastingNotes.primary}
-                </p>
-              </div>
-
               {/* Chemical Characteristics */}
-              <div className='grid grid-cols-3 gap-4 mb-8'>
+              <div className='grid grid-cols-3 gap-4 mb-6'>
                 <div className='bg-white p-4 rounded-lg text-center shadow-sm border border-navy-100'>
                   <p className='text-2xl font-bold text-navy-600'>{BRAND_VOICE.productCharacteristics.chemicalProfile.acidity}</p>
                   <p className='text-sm text-gray-500'>Acidity</p>
@@ -165,6 +156,14 @@ export default async function ProductPage() {
                   <p className='text-2xl font-bold text-navy-600'>{BRAND_VOICE.productCharacteristics.chemicalProfile.polyphenols}</p>
                   <p className='text-sm text-gray-500'>Polyphenols</p>
                 </div>
+              </div>
+
+              {/* Tasting Notes */}
+              <div className='bg-cream-100 rounded-lg p-6 mb-6'>
+                <h3 className='font-bold uppercase text-navy-600 text-lg mb-4 tracking-wide'>Tasting Notes</h3>
+                <p className='text-gray-600 italic'>
+                  {BRAND_VOICE.productCharacteristics.tastingNotes.primary}
+                </p>
               </div>
 
               {/* Stock status */}
@@ -216,10 +215,6 @@ export default async function ProductPage() {
             </div>
           </div>
 
-          {/* Product Details Section */}
-          <div className='mt-16 pt-16 border-t border-navy-200'>
-            <ProductDetails />
-          </div>
         </div>
       </div>
     </>
