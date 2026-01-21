@@ -23,12 +23,15 @@ export async function getProducts(): Promise<ProductWithPrices[]> {
   }
 
   // Filter out products without active prices on the client side
-  const productsWithActivePrices = data
-    .map((product) => ({
-      ...product,
-      prices: (product.prices || []).filter((price: any) => price.active === true),
-    }))
-    .filter((product) => product.prices.length > 0) as ProductWithPrices[];
+  const productsWithActivePrices: ProductWithPrices[] = (data as any[])
+    .map((product: any) => {
+      const filteredPrices = (product.prices || []).filter((price: any) => price.active === true);
+      return {
+        ...product,
+        prices: filteredPrices,
+      } as ProductWithPrices;
+    })
+    .filter((product: ProductWithPrices) => product.prices.length > 0);
 
   return productsWithActivePrices;
 }
