@@ -39,8 +39,16 @@ async function testBrevoEmail() {
   } catch (error: any) {
     console.error('❌ Error sending test email:', error.message);
     if (error.response) {
+      console.error('   Status:', error.response.status);
       console.error('   Response:', JSON.stringify(error.response.body, null, 2));
     }
+    if (error.body) {
+      console.error('   Error Body:', JSON.stringify(error.body, null, 2));
+    }
+    console.error('\n💡 Troubleshooting:');
+    console.error('   1. Verify BREVO_API_KEY is correct in .env.local');
+    console.error('   2. Check that the sender email (no-reply@angelicas-evoo.com) is verified in Brevo');
+    console.error('   3. Ensure the API key has "Send Email" permissions');
     process.exit(1);
   }
 }

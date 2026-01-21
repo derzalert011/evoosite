@@ -6,7 +6,30 @@ let apiInstance: brevo.TransactionalEmailsApi | null = null;
 
 export function getBrevoClient(): brevo.TransactionalEmailsApi {
   if (!apiInstance) {
-    const apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
+    let apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
+    
+    // Check if API key is base64 encoded and decode it if needed
+    // Brevo API keys typically start with 'xkeysib-' when decoded
+    try {
+      // Try to decode if it looks like base64
+      if (apiKey.length > 50 && !apiKey.startsWith('xkeysib-')) {
+        const decoded = Buffer.from(apiKey, 'base64').toString('utf-8');
+        // If decoded value looks like JSON with api_key, extract it
+        try {
+          const parsed = JSON.parse(decoded);
+          if (parsed.api_key) {
+            apiKey = parsed.api_key;
+          }
+        } catch {
+          // If not JSON, use decoded value if it starts with xkeysib-
+          if (decoded.startsWith('xkeysib-')) {
+            apiKey = decoded;
+          }
+        }
+      }
+    } catch {
+      // If decoding fails, use original key
+    }
     
     apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
@@ -41,7 +64,26 @@ export async function sendTransactionalEmail(params: {
 }
 
 export async function addContactToList(email: string, listId?: number): Promise<void> {
-  const apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
+  let apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
+  
+  // Check if API key is base64 encoded and decode it if needed
+  try {
+    if (apiKey.length > 50 && !apiKey.startsWith('xkeysib-')) {
+      const decoded = Buffer.from(apiKey, 'base64').toString('utf-8');
+      try {
+        const parsed = JSON.parse(decoded);
+        if (parsed.api_key) {
+          apiKey = parsed.api_key;
+        }
+      } catch {
+        if (decoded.startsWith('xkeysib-')) {
+          apiKey = decoded;
+        }
+      }
+    }
+  } catch {
+    // If decoding fails, use original key
+  }
   
   const apiInstance = new brevo.ContactsApi();
   apiInstance.setApiKey(brevo.ContactsApiApiKeys.apiKey, apiKey);
