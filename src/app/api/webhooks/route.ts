@@ -21,14 +21,28 @@ const relevantEvents = new Set([
 export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get('stripe-signature') as string;
-  const webhookSecret = getEnvVar(process.env.STRIPE_WEBHOOK_SECRET, 'STRIPE_WEBHOOK_SECRET');
+  
+  // Get webhook secret with proper error handling
+  let webhookSecret: string;
+  try {
+    webhookSecret = getEnvVar(process.env.STRIPE_WEBHOOK_SECRET, 'STRIPE_WEBHOOK_SECRET');
+  } catch (error) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured');
+    return Response.json({ error: 'Webhook secret not configured' }, { status: 500 });
+  }
+
   let event: Stripe.Event;
 
   try {
-    if (!sig || !webhookSecret) return;
+    if (!sig) {
+      console.error('Missing stripe-signature header');
+      return Response.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+    }
     event = stripeAdmin.webhooks.constructEvent(body, sig, webhookSecret);
+    console.log(`✅ Webhook received: ${event.type}`);
   } catch (error) {
-    return Response.json(`Webhook Error: ${(error as any).message}`, { status: 400 });
+    console.error('Webhook signature verification failed:', (error as any).message);
+    return Response.json({ error: `Webhook Error: ${(error as any).message}` }, { status: 400 });
   }
 
   if (relevantEvents.has(event.type)) {
@@ -54,6 +68,7 @@ export async function POST(req: Request) {
           break;
         case 'checkout.session.completed':
           const checkoutSession = event.data.object as Stripe.Checkout.Session;
+          console.log(`📦 Processing checkout session: ${checkoutSession.id}, mode: ${checkoutSession.mode}`);
 
           if (checkoutSession.mode === 'subscription') {
             const subscriptionId = checkoutSession.subscription;
@@ -64,18 +79,21 @@ export async function POST(req: Request) {
             });
           } else if (checkoutSession.mode === 'payment') {
             // Handle one-time payment orders
-            await processOrder(checkoutSession);
+            console.log('🛒 Processing one-time payment order...');
+            const result = await processOrder(checkoutSession);
+            console.log(`✅ Order processed: ${result.orderId}, errors: ${result.errors.length}`);
           }
           break;
         default:
           throw new Error('Unhandled relevant event!');
       }
     } catch (error) {
-      console.error(error);
-      return Response.json('Webhook handler failed. View your nextjs function logs.', {
+      console.error('❌ Webhook handler failed:', error);
+      return Response.json({ error: 'Webhook handler failed', details: (error as any).message }, {
         status: 400,
       });
     }
   }
+  console.log(`✅ Webhook processed successfully: ${event.type}`);
   return Response.json({ received: true });
 }
