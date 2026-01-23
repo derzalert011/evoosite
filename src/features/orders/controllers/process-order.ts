@@ -189,7 +189,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
           orderNumber: order.id.substring(0, 8),
           customerName: customerName || undefined,
           customerEmail,
-          productName: product.name,
+          productName: product.name || 'Unknown Product',
           quantity,
           totalAmount: session.amount_total || 0,
           shippingAddress: shippingAddressJson,
