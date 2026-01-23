@@ -13,8 +13,13 @@ export async function signupNewsletter(email: string): Promise<{ error?: string 
 
   try {
     // Add contact to Brevo for list management
-    await addContactToList(email);
-    console.log(`✅ Newsletter signup: ${email} added to Brevo list`);
+    try {
+      await addContactToList(email);
+      console.log(`✅ Newsletter signup: ${email} added to Brevo list`);
+    } catch (brevoError: any) {
+      // Log but don't fail if Brevo has issues - we still want to send the welcome email
+      console.error('⚠️ Brevo contact add failed (continuing with signup):', brevoError?.message || brevoError);
+    }
 
     // Send welcome email via Resend
     try {
