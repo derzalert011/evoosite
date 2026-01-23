@@ -94,8 +94,21 @@ export async function createShipment(
     async: false,
   });
 
+  // Check for transaction errors
+  if (transaction.status === 'ERROR' || transaction.objectStatus === 'ERROR') {
+    const errorMessages = transaction.messages || [];
+    const errorText = errorMessages
+      .map((msg: any) => `${msg.source || 'Shippo'}: ${msg.text || msg.code || 'Unknown error'}`)
+      .join('; ') || 'Unknown error from Shippo';
+    throw new Error(`Failed to generate shipping label: ${errorText}`);
+  }
+
   if (!transaction.labelUrl) {
-    throw new Error('Failed to generate shipping label');
+    const errorMessages = transaction.messages || [];
+    const errorText = errorMessages.length > 0
+      ? errorMessages.map((msg: any) => `${msg.source || 'Shippo'}: ${msg.text || msg.code || 'Unknown error'}`).join('; ')
+      : 'No label URL returned';
+    throw new Error(`Failed to generate shipping label: ${errorText}`);
   }
 
   return {

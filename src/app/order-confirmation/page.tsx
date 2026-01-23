@@ -102,12 +102,9 @@ export default async function OrderConfirmationPage({ searchParams }: PageProps)
             </p>
           </div>
 
-          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+          <div className='flex justify-center'>
             <Button asChild variant='sexy' className='bg-[#F7D63A] text-[#001B71] hover:bg-[#F7D63A]/90'>
               <Link href='/products/angelicas-organic-evoo'>Continue Shopping</Link>
-            </Button>
-            <Button asChild variant='outline'>
-              <Link href='/account'>View Account</Link>
             </Button>
           </div>
         </div>
