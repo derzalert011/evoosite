@@ -95,7 +95,7 @@ export async function createShipment(
   });
 
   // Check for transaction errors
-  if (transaction.status === 'ERROR' || transaction.objectState === 'ERROR') {
+  if (transaction.status === 'ERROR' || transaction.objectState === 'INVALID') {
     const errorMessages = transaction.messages || [];
     const errorText = errorMessages
       .map((msg: any) => `${msg.source || 'Shippo'}: ${msg.text || msg.code || 'Unknown error'}`)
