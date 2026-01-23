@@ -8,28 +8,20 @@ export function getBrevoClient(): brevo.TransactionalEmailsApi {
   if (!apiInstance) {
     let apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
     
-    // Check if API key is base64 encoded and decode it if needed
-    // Brevo API keys typically start with 'xkeysib-' when decoded
-    try {
-      // Try to decode if it looks like base64
-      if (apiKey.length > 50 && !apiKey.startsWith('xkeysib-')) {
+    // Decode base64 encoded API key if needed (Brevo keys start with 'xkeysib-')
+    if (!apiKey.startsWith('xkeysib-')) {
+      try {
         const decoded = Buffer.from(apiKey, 'base64').toString('utf-8');
-        // If decoded value looks like JSON with api_key, extract it
-        try {
-          const parsed = JSON.parse(decoded);
-          if (parsed.api_key) {
-            apiKey = parsed.api_key;
-          }
-        } catch {
-          // If not JSON, use decoded value if it starts with xkeysib-
-          if (decoded.startsWith('xkeysib-')) {
-            apiKey = decoded;
-          }
+        const parsed = JSON.parse(decoded);
+        if (parsed.api_key) {
+          apiKey = parsed.api_key;
         }
+      } catch {
+        // If decoding fails, use original key
       }
-    } catch {
-      // If decoding fails, use original key
     }
+    
+    console.log(`🔑 Brevo API key configured: ${apiKey.substring(0, 15)}...`);
     
     apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
@@ -47,12 +39,16 @@ export async function sendTransactionalEmail(params: {
 }): Promise<void> {
   const apiInstance = getBrevoClient();
   
+  // Get admin email to use as sender (must be verified in Brevo)
+  // Brevo requires sender emails to be verified before use
+  const adminEmail = process.env.ADMIN_EMAIL || 'derz.paz@gmail.com';
+  
   const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.to = params.to;
   sendSmtpEmail.subject = params.subject;
   sendSmtpEmail.htmlContent = params.htmlContent;
   sendSmtpEmail.sender = params.from || {
-    email: 'no-reply@angelicas-evoo.com',
+    email: adminEmail,
     name: "Angelica's Organic EVOO",
   };
   
@@ -60,29 +56,35 @@ export async function sendTransactionalEmail(params: {
     sendSmtpEmail.replyTo = params.replyTo;
   }
 
-  await apiInstance.sendTransacEmail(sendSmtpEmail);
+  try {
+    console.log(`📧 Sending email to: ${params.to.map(t => t.email).join(', ')}`);
+    console.log(`   From: ${sendSmtpEmail.sender.email}`);
+    console.log(`   Subject: ${params.subject}`);
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log(`✅ Email sent successfully:`, result);
+  } catch (error: any) {
+    console.error('❌ Brevo email send failed:', error?.message || error);
+    if (error?.response?.body) {
+      console.error('   Brevo API Response:', JSON.stringify(error.response.body, null, 2));
+    }
+    throw error;
+  }
 }
 
 export async function addContactToList(email: string, listId?: number): Promise<void> {
   let apiKey = getEnvVar(process.env.BREVO_API_KEY, 'BREVO_API_KEY');
   
-  // Check if API key is base64 encoded and decode it if needed
-  try {
-    if (apiKey.length > 50 && !apiKey.startsWith('xkeysib-')) {
+  // Decode base64 encoded API key if needed
+  if (!apiKey.startsWith('xkeysib-')) {
+    try {
       const decoded = Buffer.from(apiKey, 'base64').toString('utf-8');
-      try {
-        const parsed = JSON.parse(decoded);
-        if (parsed.api_key) {
-          apiKey = parsed.api_key;
-        }
-      } catch {
-        if (decoded.startsWith('xkeysib-')) {
-          apiKey = decoded;
-        }
+      const parsed = JSON.parse(decoded);
+      if (parsed.api_key) {
+        apiKey = parsed.api_key;
       }
+    } catch {
+      // If decoding fails, use original key
     }
-  } catch {
-    // If decoding fails, use original key
   }
   
   const apiInstance = new brevo.ContactsApi();
@@ -93,12 +95,15 @@ export async function addContactToList(email: string, listId?: number): Promise<
   createContact.listIds = listId ? [listId] : undefined;
 
   try {
+    console.log(`📇 Adding contact to Brevo: ${email}`);
     await apiInstance.createContact(createContact);
+    console.log(`✅ Contact added successfully: ${email}`);
   } catch (error: any) {
     // If contact already exists, that's okay - just log it
     if (error?.response?.body?.code === 'duplicate_parameter') {
-      console.info(`Contact ${email} already exists in list`);
+      console.info(`ℹ️ Contact ${email} already exists in Brevo`);
     } else {
+      console.error(`❌ Failed to add contact: ${email}`, error?.response?.body || error?.message);
       throw error;
     }
   }
