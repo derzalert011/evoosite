@@ -27,7 +27,7 @@ export default async function OrderConfirmationPage({ searchParams }: PageProps)
 
   try {
     const session = await stripeAdmin.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items', 'customer', 'shipping_details'],
+      expand: ['line_items', 'customer'],
     });
 
     if (!session.line_items?.data || session.line_items.data.length === 0) {

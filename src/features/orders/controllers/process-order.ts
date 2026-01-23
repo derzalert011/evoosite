@@ -13,8 +13,9 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
 
   try {
     // 1. Retrieve full checkout session with line items
+    // Note: shipping_details is not expandable - it's included by default
     const session = await stripeAdmin.checkout.sessions.retrieve(checkoutSession.id, {
-      expand: ['line_items', 'customer', 'shipping_details'],
+      expand: ['line_items', 'customer'],
     });
 
     if (!session.line_items?.data || session.line_items.data.length === 0) {
