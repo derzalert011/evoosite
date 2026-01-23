@@ -158,6 +158,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
 
     // 8. Send customer welcome email via Resend
     try {
+      console.log(`📧 Preparing welcome email for: ${customerEmail}`);
       const welcomeEmailHtml = await render(
         WelcomeToFamilyEmail({
           customerName: customerName || undefined,
@@ -165,6 +166,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
         })
       );
 
+      console.log(`📧 Sending welcome email via Resend to: ${customerEmail}`);
       const result = await sendTransactionalEmail({
         to: [{ email: customerEmail, name: customerName || undefined }],
         subject: 'Welcome to the Family! 🫒',
@@ -173,17 +175,33 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
       });
 
       if (result.success) {
-        console.log(`✅ Customer welcome email sent to: ${customerEmail}`);
+        console.log(`✅ Customer welcome email sent successfully to: ${customerEmail}`);
+        console.log(`   Message ID: ${result.messageId || 'N/A'}`);
       } else {
-        throw new Error(result.error || 'Failed to send email');
+        const errorMsg = result.error || 'Failed to send email';
+        console.error(`❌ Failed to send customer welcome email to ${customerEmail}:`, errorMsg);
+        console.error(`   Full error details:`, JSON.stringify(result, null, 2));
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ Failed to send customer email:', error);
-      errors.push({ service: 'Customer Email', error: error.message || 'Unknown error' });
+      console.error('❌ Failed to send customer welcome email:', error);
+      console.error('   Error type:', error?.constructor?.name);
+      console.error('   Error message:', error?.message);
+      console.error('   Error stack:', error?.stack);
+      if (error?.response) {
+        console.error('   API response:', JSON.stringify(error.response, null, 2));
+      }
+      errors.push({ 
+        service: 'Customer Welcome Email', 
+        error: error?.message || error?.toString() || 'Unknown error' 
+      });
     }
 
     // 9. Send admin notification email via Resend
     try {
+      const adminEmail = getAdminEmail();
+      console.log(`📧 Preparing admin notification email for: ${adminEmail}`);
+      
       const adminEmailHtml = await render(
         AdminOrderNotificationEmail({
           orderNumber: order.id.substring(0, 8),
@@ -199,9 +217,7 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
         })
       );
 
-      const adminEmail = getAdminEmail();
-      console.log(`📧 Sending admin notification to: ${adminEmail}`);
-
+      console.log(`📧 Sending admin notification via Resend to: ${adminEmail}`);
       const result = await sendTransactionalEmail({
         to: [{ email: adminEmail }],
         subject:
@@ -213,12 +229,20 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
       });
 
       if (result.success) {
-        console.log(`✅ Admin notification sent to: ${adminEmail}`);
+        console.log(`✅ Admin notification sent successfully to: ${adminEmail}`);
+        console.log(`   Message ID: ${result.messageId || 'N/A'}`);
       } else {
-        console.error(`❌ Failed to send admin email: ${result.error}`);
+        console.error(`❌ Failed to send admin notification email to ${adminEmail}:`, result.error);
+        console.error(`   Full error details:`, JSON.stringify(result, null, 2));
       }
     } catch (error: any) {
       console.error('❌ Failed to send admin notification email:', error);
+      console.error('   Error type:', error?.constructor?.name);
+      console.error('   Error message:', error?.message);
+      console.error('   Error stack:', error?.stack);
+      if (error?.response) {
+        console.error('   API response:', JSON.stringify(error.response, null, 2));
+      }
       // Don't add to errors array - admin notification failure shouldn't block order
     }
 

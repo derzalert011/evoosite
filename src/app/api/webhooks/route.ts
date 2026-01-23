@@ -80,8 +80,13 @@ export async function POST(req: Request) {
           } else if (checkoutSession.mode === 'payment') {
             // Handle one-time payment orders
             console.log('🛒 Processing one-time payment order...');
+            console.log(`   Customer email: ${checkoutSession.customer_details?.email || checkoutSession.customer_email || 'N/A'}`);
+            console.log(`   Customer name: ${checkoutSession.customer_details?.name || 'N/A'}`);
             const result = await processOrder(checkoutSession);
             console.log(`✅ Order processed: ${result.orderId}, errors: ${result.errors.length}`);
+            if (result.errors.length > 0) {
+              console.error('⚠️ Order processing errors:', JSON.stringify(result.errors, null, 2));
+            }
           }
           break;
         default:

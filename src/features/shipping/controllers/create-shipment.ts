@@ -20,7 +20,17 @@ export async function createShipment(
   const shippo = getShippoClient();
   const origin = getShippingOrigin();
 
+  // Debug logging to verify email/phone are set
+  console.log('📦 Creating shipment with origin:', {
+    name: origin.name,
+    email: origin.email ? `${origin.email.substring(0, 3)}***` : 'MISSING',
+    phone: origin.phone ? `${origin.phone.substring(0, 3)}***` : 'MISSING',
+    city: origin.city,
+    state: origin.state,
+  });
+
   // Create address objects
+  // USPS requires email and phone for sender address
   const fromAddress = {
     name: origin.name,
     street1: origin.street1,
@@ -28,6 +38,8 @@ export async function createShipment(
     state: origin.state,
     zip: origin.zip,
     country: origin.country,
+    email: origin.email,
+    phone: origin.phone,
   };
 
   const toAddress = {

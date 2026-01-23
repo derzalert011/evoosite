@@ -1,6 +1,7 @@
 import { Shippo } from 'shippo';
 
 import { getEnvVar } from '@/utils/get-env-var';
+import { getAdminEmail } from '@/libs/resend/resend-client';
 
 let shippoClient: Shippo | null = null;
 
@@ -22,6 +23,8 @@ export interface ShippingOrigin {
   state: string;
   zip: string;
   country: string;
+  email: string;
+  phone: string;
 }
 
 export function getShippingOrigin(): ShippingOrigin {
@@ -32,5 +35,9 @@ export function getShippingOrigin(): ShippingOrigin {
     state: getEnvVar(process.env.SHIPPO_ORIGIN_STATE, 'SHIPPO_ORIGIN_STATE'),
     zip: getEnvVar(process.env.SHIPPO_ORIGIN_ZIP, 'SHIPPO_ORIGIN_ZIP'),
     country: process.env.SHIPPO_ORIGIN_COUNTRY || 'US',
+    // Email: use SHIPPO_ORIGIN_EMAIL if set, otherwise fallback to admin email
+    email: process.env.SHIPPO_ORIGIN_EMAIL || getAdminEmail(),
+    // Phone: required by USPS, must be set via environment variable
+    phone: getEnvVar(process.env.SHIPPO_ORIGIN_PHONE, 'SHIPPO_ORIGIN_PHONE'),
   };
 }

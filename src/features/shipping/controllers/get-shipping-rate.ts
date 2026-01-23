@@ -33,6 +33,7 @@ export async function getShippingRate(
   const origin = getShippingOrigin();
 
   // Create address objects
+  // USPS requires email and phone for sender address
   const fromAddress = {
     name: origin.name,
     street1: origin.street1,
@@ -40,6 +41,8 @@ export async function getShippingRate(
     state: origin.state,
     zip: origin.zip,
     country: origin.country,
+    email: origin.email,
+    phone: origin.phone,
   };
 
   const toAddress = {
