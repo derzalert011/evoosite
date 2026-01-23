@@ -2,12 +2,21 @@ import z from 'zod';
 
 export type PriceCardVariant = 'basic' | 'pro' | 'enterprise';
 
+// Helper to coerce string to number
+const coerceToNumber = z.union([
+  z.number(),
+  z.string().transform((val) => {
+    const num = parseInt(val, 10);
+    return isNaN(num) ? undefined : num;
+  }),
+]).optional();
+
 export const productMetadataSchema = z
   .object({
     bottle_size: z.string().optional(), // e.g., "500ml"
     purchase_date: z.string().optional(), // ISO date string
-    stock_count: z.number().optional(),
-    harvest_year: z.number().optional(),
+    stock_count: coerceToNumber, // Can be string or number from Stripe metadata
+    harvest_year: coerceToNumber, // Can be string or number from Stripe metadata
     // Keep legacy fields for backward compatibility during migration
     price_card_variant: z.enum(['basic', 'pro', 'enterprise']).optional(),
     generated_images: z.string().optional(),
