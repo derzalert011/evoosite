@@ -1,12 +1,14 @@
 import Stripe from 'stripe';
+import { render } from '@react-email/render';
 
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createShipment, type ShippingDestination } from '@/features/shipping/controllers/create-shipment';
-import { sendTransactionalEmail } from '@/libs/brevo/brevo-client';
-import { getEnvVar } from '@/utils/get-env-var';
+import { sendTransactionalEmail, getAdminEmail, BRAND_EMAIL, BRAND_NAME } from '@/libs/resend/resend-client';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 import { productMetadataSchema } from '@/features/pricing/models/product-metadata';
+import { WelcomeToFamilyEmail } from '@/features/emails/welcome-to-family';
+import { AdminOrderNotificationEmail } from '@/features/emails/admin-order-notification';
 
 export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
   const errors: Array<{ service: string; error: string }> = [];
@@ -86,8 +88,8 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
     try {
       await stripeAdmin.products.update(productId, {
         metadata: {
-          ...(product.metadata && typeof product.metadata === 'object' && !Array.isArray(product.metadata) 
-            ? product.metadata as Record<string, string>
+          ...(product.metadata && typeof product.metadata === 'object' && !Array.isArray(product.metadata)
+            ? (product.metadata as Record<string, string>)
             : {}),
           stock_count: newStock.toString(),
         },
@@ -154,87 +156,69 @@ export async function processOrder(checkoutSession: Stripe.Checkout.Session) {
         .eq('id', order.id);
     }
 
-    // 8. Send customer email
+    // 8. Send customer welcome email via Resend
     try {
-      const welcomeEmailHtml = `
-        <!DOCTYPE html>
-        <html>
-          <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h1>Welcome to the Family!</h1>
-            <p>Hello ${customerName || 'there'},</p>
-            <p>Thank you for choosing Angelica's Organic Extra Virgin Olive Oil. We're thrilled to welcome you to our family.</p>
-            <p>Your order (#${order.id.substring(0, 8)}) is being prepared with care. We'll send you a confirmation email once your bottle(s) are on their way.</p>
-            <p>Each bottle is crafted with the same love and intention that Angelica brought to her kitchen. We hope it becomes a treasured part of your family's table.</p>
-            <p>From our kitchen to yours — salud</p>
-            <p>- The Angelica's Family</p>
-          </body>
-        </html>
-      `;
+      const welcomeEmailHtml = await render(
+        WelcomeToFamilyEmail({
+          customerName: customerName || undefined,
+          orderNumber: order.id.substring(0, 8),
+        })
+      );
 
-      await sendTransactionalEmail({
+      const result = await sendTransactionalEmail({
         to: [{ email: customerEmail, name: customerName || undefined }],
-        subject: "Welcome to the Family!",
-        htmlContent: welcomeEmailHtml,
+        subject: 'Welcome to the Family! 🫒',
+        html: welcomeEmailHtml,
+        replyTo: BRAND_EMAIL,
       });
-      console.log(`✅ Customer email sent to: ${customerEmail}`);
+
+      if (result.success) {
+        console.log(`✅ Customer welcome email sent to: ${customerEmail}`);
+      } else {
+        throw new Error(result.error || 'Failed to send email');
+      }
     } catch (error: any) {
       console.error('❌ Failed to send customer email:', error);
       errors.push({ service: 'Customer Email', error: error.message || 'Unknown error' });
     }
 
-    // 9. Send admin notification email
+    // 9. Send admin notification email via Resend
     try {
-      const adminEmailHtml = `
-        <!DOCTYPE html>
-        <html>
-          <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h1>${errors.length > 0 ? '⚠️ Order Received - Manual Processing Required' : '📦 New Order'}</h1>
-            <h2>Order #${order.id.substring(0, 8)}</h2>
-            ${errors.length > 0 ? `
-              <div style="background-color: #fff3cd; padding: 15px; border: 1px solid #ffc107; border-radius: 5px; margin: 20px 0;">
-                <h3>⚠️ Manual Processing Required</h3>
-                <p>The following errors occurred:</p>
-                <ul>
-                  ${errors.map(e => `<li><strong>${e.service}:</strong> ${e.error}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> ${customerName || 'N/A'}</p>
-            <p><strong>Email:</strong> ${customerEmail}</p>
-            <h3>Order Details</h3>
-            <p><strong>Product:</strong> ${product.name}</p>
-            <p><strong>Quantity:</strong> ${quantity} bottle${quantity > 1 ? 's' : ''}</p>
-            <p><strong>Total:</strong> $${((session.amount_total || 0) / 100).toFixed(2)}</p>
-            <h3>Shipping Address</h3>
-            <p>${shippingDestination.name}</p>
-            <p>${shippingDestination.street1}</p>
-            ${shippingDestination.street2 ? `<p>${shippingDestination.street2}</p>` : ''}
-            <p>${shippingDestination.city}, ${shippingDestination.state} ${shippingDestination.zip}</p>
-            ${shippingLabelUrls.length > 0 ? `
-              <h3>Shipping Labels</h3>
-              ${shippingLabelUrls.map((url, idx) => `<p><a href="${url}">Label ${idx + 1}</a></p>`).join('')}
-              <p><strong>Shipping Cost:</strong> $${totalShippingCost.toFixed(2)}</p>
-            ` : '<p>⚠️ Shipping labels were not generated. Please create them manually in Shippo.</p>'}
-          </body>
-        </html>
-      `;
+      const adminEmailHtml = await render(
+        AdminOrderNotificationEmail({
+          orderNumber: order.id.substring(0, 8),
+          customerName: customerName || undefined,
+          customerEmail,
+          productName: product.name,
+          quantity,
+          totalAmount: session.amount_total || 0,
+          shippingAddress: shippingAddressJson,
+          shippingLabelUrls,
+          totalShippingCost,
+          errors: errors.length > 0 ? errors : undefined,
+        })
+      );
 
-      const adminEmail = getEnvVar(process.env.ADMIN_EMAIL, 'ADMIN_EMAIL');
-      console.log(`📧 Sending admin email to: ${adminEmail}`);
-      await sendTransactionalEmail({
+      const adminEmail = getAdminEmail();
+      console.log(`📧 Sending admin notification to: ${adminEmail}`);
+
+      const result = await sendTransactionalEmail({
         to: [{ email: adminEmail }],
-        subject: errors.length > 0 
-          ? `⚠️ Order #${order.id.substring(0, 8)} - Manual Processing Required`
-          : `📦 New Order #${order.id.substring(0, 8)}`,
-        htmlContent: adminEmailHtml,
+        subject:
+          errors.length > 0
+            ? `⚠️ Order #${order.id.substring(0, 8)} - Manual Processing Required`
+            : `📦 New Order #${order.id.substring(0, 8)}`,
+        html: adminEmailHtml,
+        replyTo: customerEmail,
       });
-      console.log(`✅ Admin email sent successfully to: ${adminEmail}`);
+
+      if (result.success) {
+        console.log(`✅ Admin notification sent to: ${adminEmail}`);
+      } else {
+        console.error(`❌ Failed to send admin email: ${result.error}`);
+      }
     } catch (error: any) {
       console.error('❌ Failed to send admin notification email:', error);
-      if (error.response) {
-        console.error('   Brevo API Response:', JSON.stringify(error.response.body, null, 2));
-      }
       // Don't add to errors array - admin notification failure shouldn't block order
     }
 

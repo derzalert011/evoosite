@@ -2,8 +2,7 @@
 
 import { render } from '@react-email/render';
 
-import { sendTransactionalEmail } from '@/libs/brevo/brevo-client';
-import { getEnvVar } from '@/utils/get-env-var';
+import { sendTransactionalEmail, getAdminEmail, BRAND_EMAIL, BRAND_NAME } from '@/libs/resend/resend-client';
 import { ContactFormEmail } from '../emails/contact-form-email';
 import type { ActionResponse } from '@/types/action-response';
 
@@ -13,7 +12,7 @@ export async function sendContactMessage(params: {
   message: string;
 }): Promise<ActionResponse> {
   try {
-    const adminEmail = getEnvVar(process.env.ADMIN_EMAIL, 'ADMIN_EMAIL');
+    const adminEmail = getAdminEmail();
 
     // Render email template
     const emailHtml = await render(
@@ -24,20 +23,21 @@ export async function sendContactMessage(params: {
       })
     );
 
-    // Send email to admin
-    await sendTransactionalEmail({
+    // Send email to admin via Resend
+    const result = await sendTransactionalEmail({
       to: [{ email: adminEmail, name: 'Admin' }],
       subject: `New Contact Form Submission from ${params.name}`,
-      htmlContent: emailHtml,
+      html: emailHtml,
       from: {
-        email: 'no-reply@angelicas-evoo.com',
-        name: "Angelica's Organic EVOO",
+        email: BRAND_EMAIL,
+        name: BRAND_NAME,
       },
-      replyTo: {
-        email: params.email,
-        name: params.name,
-      },
+      replyTo: params.email,
     });
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
 
     return { data: { success: true }, error: null };
   } catch (error: any) {

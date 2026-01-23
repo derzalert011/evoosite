@@ -11,18 +11,18 @@ interface AdminOrderNotificationEmailProps {
   customerEmail: string;
   productName: string;
   quantity: number;
+  totalAmount: number; // in cents
   shippingAddress: {
     name?: string;
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    postal_code?: string;
-    country?: string;
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
   };
   shippingLabelUrls?: string[];
-  shippingRate?: number;
-  totalCost?: number;
+  totalShippingCost?: number;
   errors?: Array<{ service: string; error: string }>;
 }
 
@@ -32,10 +32,10 @@ export function AdminOrderNotificationEmail({
   customerEmail,
   productName,
   quantity,
+  totalAmount,
   shippingAddress,
   shippingLabelUrls = [],
-  shippingRate,
-  totalCost,
+  totalShippingCost,
   errors = [],
 }: AdminOrderNotificationEmailProps) {
   const hasErrors = errors.length > 0;
@@ -105,11 +105,9 @@ export function AdminOrderNotificationEmail({
                 <Text className='my-1 text-[14px]'>
                   <strong>Quantity:</strong> {quantity} bottle{quantity > 1 ? 's' : ''}
                 </Text>
-                {totalCost && (
-                  <Text className='my-1 text-[14px]'>
-                    <strong>Total:</strong> ${(totalCost / 100).toFixed(2)}
-                  </Text>
-                )}
+                <Text className='my-1 text-[14px]'>
+                  <strong>Total:</strong> ${(totalAmount / 100).toFixed(2)}
+                </Text>
               </Section>
 
               <Section className='my-6'>
@@ -148,9 +146,9 @@ export function AdminOrderNotificationEmail({
                       </Link>
                     </Text>
                   ))}
-                  {shippingRate && (
+                  {totalShippingCost !== undefined && totalShippingCost > 0 && (
                     <Text className='my-2 text-[14px]'>
-                      <strong>Shipping Cost:</strong> ${shippingRate.toFixed(2)} (per label)
+                      <strong>Total Shipping Cost:</strong> ${totalShippingCost.toFixed(2)}
                     </Text>
                   )}
                 </Section>

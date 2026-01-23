@@ -1,6 +1,7 @@
 'use server';
 
-import { addContactToList, sendTransactionalEmail } from '@/libs/brevo/brevo-client';
+import { addContactToList } from '@/libs/brevo/brevo-client';
+import { sendTransactionalEmail, BRAND_EMAIL } from '@/libs/resend/resend-client';
 import { BRAND_VOICE } from '@/lib/brand-config';
 
 export async function signupNewsletter(email: string): Promise<{ error?: string }> {
@@ -11,11 +12,11 @@ export async function signupNewsletter(email: string): Promise<{ error?: string 
   }
 
   try {
-    // Add contact to Brevo (no list ID specified - will be added to default list or configured later)
+    // Add contact to Brevo for list management
     await addContactToList(email);
     console.log(`✅ Newsletter signup: ${email} added to Brevo list`);
 
-    // Send welcome email
+    // Send welcome email via Resend
     try {
       const welcomeEmailHtml = `
         <!DOCTYPE html>
@@ -34,12 +35,18 @@ export async function signupNewsletter(email: string): Promise<{ error?: string 
         </html>
       `;
 
-      await sendTransactionalEmail({
+      const result = await sendTransactionalEmail({
         to: [{ email }],
-        subject: "Welcome to the Family! 🫒",
-        htmlContent: welcomeEmailHtml,
+        subject: 'Welcome to the Family! 🫒',
+        html: welcomeEmailHtml,
+        replyTo: BRAND_EMAIL,
       });
-      console.log(`✅ Welcome email sent to: ${email}`);
+
+      if (result.success) {
+        console.log(`✅ Welcome email sent to: ${email}`);
+      } else {
+        console.error(`⚠️ Failed to send welcome email: ${result.error}`);
+      }
     } catch (emailError: any) {
       console.error('⚠️ Failed to send welcome email (newsletter signup still succeeded):', emailError);
       // Don't fail the signup if email fails
@@ -49,7 +56,7 @@ export async function signupNewsletter(email: string): Promise<{ error?: string 
   } catch (error: any) {
     console.error('❌ Newsletter signup error:', error);
     if (error.response) {
-      console.error('   Brevo API Response:', JSON.stringify(error.response.body, null, 2));
+      console.error('   API Response:', JSON.stringify(error.response.body, null, 2));
     }
     return { error: 'Failed to sign up. Please try again.' };
   }
